@@ -1,6 +1,6 @@
 <div align="center">
 
-# Najwa Planner OS 🚀
+# Najwa Planner
 
 <img src="logo.svg" alt="Najwa Planner Logo" width="120" />
 
