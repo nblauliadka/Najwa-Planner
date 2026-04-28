@@ -1,9 +1,10 @@
+<div align="center">
+
 # Najwa Planner OS 🚀
 
-<div align="center">
-  <img src="logo.svg" alt="Najwa Planner Logo" width="120" />
-  <p><strong>A Premium, Offline-First Personal Life & Habit Tracker</strong></p>
-</div>
+<img src="logo.svg" alt="Najwa Planner Logo" width="120" />
+
+<p><strong>A Premium, Offline-First Personal Life & Habit Tracker</strong></p>
 
 ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-323330?style=for-the-badge&logo=javascript&logoColor=F7DF1E)
@@ -11,8 +12,9 @@
 ![PWA Ready](https://img.shields.io/badge/PWA-Ready-8A2BE2?style=for-the-badge&logo=pwa&logoColor=white)
 ![Local First](https://img.shields.io/badge/Local_First-10B981?style=for-the-badge&logo=sqlite&logoColor=white)
 
----
+</div>
 
+---
 ## 📌 Overview
 
 **Najwa Planner** is a high-performance, single-page Personal Operating System (OS) built entirely with Vanilla JavaScript, HTML5, and Tailwind CSS. Designed to be a **100% offline-first Progressive Web App (PWA)**, it requires zero backend servers to function. All your routines, logs, and calendar events are securely stored locally within your browser using **IndexedDB**. 
@@ -77,5 +79,5 @@ najwa-planner/
 ---
 
 <div align="center">
-  <p>Designed and Built by <strong>J.A.R.V.I.S / Antigravity</strong></p>
+  <p>Designed and Built by <strong>nabil aulia dika / Antigravity</strong></p>
 </div>
