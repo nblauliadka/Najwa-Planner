@@ -1,0 +1,18 @@
+{
+  "name": "Najwa Planner",
+  "short_name": "Najwa Planner",
+  "description": "Offline-First Personal Life & Habit Tracker",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#fdf2f8",
+  "theme_color": "#db2777",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

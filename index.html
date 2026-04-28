@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="en" class="theme-dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Najwa Planner OS</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0B0F19" id="theme-color-meta">
+    <link rel="icon" type="image/svg+xml" href="./logo.svg">
+    <link rel="apple-touch-icon" href="./logo.svg">
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: {
+                        brand: 'var(--color-brand)',
+                        brandGlow: 'var(--color-brand-glow)',
+                        bgPrime: 'var(--color-bg-prime)',
+                        card: 'var(--color-card)',
+                        textMain: 'var(--color-text-main)',
+                        textMuted: 'var(--color-text-muted)',
+                        borderFade: 'var(--color-border)',
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+                        'blob': 'blob 7s infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(15px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root, html.theme-light {
+            --color-brand: #4f46e5;
+            --color-brand-glow: rgba(79, 70, 229, 0.2);
+            --color-bg-prime: #f8fafc;
+            --color-card: #ffffff;
+            --color-text-main: #0f172a;
+            --color-text-muted: #64748b;
+            --color-border: rgba(226, 232, 240, 0.8);
+        }
+
+        html.theme-dark {
+            --color-brand: #6366f1;
+            --color-brand-glow: rgba(99, 102, 241, 0.3);
+            --color-bg-prime: #050505;
+            --color-card: #0f1115;
+            --color-text-main: #f8fafc;
+            --color-text-muted: #94a3b8;
+            --color-border: rgba(30, 41, 59, 0.8);
+        }
+
+        html.theme-pink {
+            --color-brand: #f43f5e;
+            --color-brand-glow: rgba(244, 63, 94, 0.3);
+            --color-bg-prime: #fff1f2;
+            --color-card: #ffe4e6;
+            --color-text-main: #881337;
+            --color-text-muted: #e11d48;
+            --color-border: rgba(254, 205, 211, 0.8);
+        }
+
+        body {
+            background-color: var(--color-bg-prime);
+            color: var(--color-text-main);
+            transition: background-color 0.5s ease, color 0.5s ease;
+            -webkit-tap-highlight-color: transparent;
+            min-height: 100vh;
+        }
+
+        /* Glassmorphism Classes */
+        .glass-nav {
+            background: color-mix(in srgb, var(--color-card) 70%, transparent);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--color-border);
+        }
+
+        .glass-header {
+            background: linear-gradient(180deg, color-mix(in srgb, var(--color-bg-prime) 90%, transparent) 0%, color-mix(in srgb, var(--color-bg-prime) 0%, transparent) 100%);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .bento-card {
+            background: color-mix(in srgb, var(--color-card) 60%, transparent);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--color-border);
+            border-radius: 2rem;
+            padding: 1.75rem;
+            box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+        }
+        
+        html.theme-dark .bento-card {
+            box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .bento-card:hover {
+            transform: translateY(-2px);
+            border-color: color-mix(in srgb, var(--color-brand) 40%, transparent);
+            box-shadow: 0 12px 32px -4px var(--color-brand-glow);
+        }
+
+        /* Blobs */
+        .animation-delay-2000 { animation-delay: 2s; }
+        .animation-delay-4000 { animation-delay: 4s; }
+
+        ::-webkit-scrollbar { width: 0px; height: 0px; background: transparent; }
+        * { scrollbar-width: none; }
+
+        button:active {
+            transform: scale(0.96);
+            transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Toggle Switch */
+        .toggle-switch input:checked ~ div {
+            background-color: var(--color-brand);
+        }
+        .toggle-switch input:checked ~ div::after {
+            transform: translateX(100%);
+            border-color: white;
+        }
+
+        /* Heatmap empty state */
+        .heat-0 {
+            background-color: rgba(150, 150, 150, 0.15);
+            border: 1px solid rgba(150, 150, 150, 0.2);
+        }
+        html.theme-pink .heat-0 {
+            background-color: rgba(244, 63, 94, 0.1);
+            border: 1px solid rgba(244, 63, 94, 0.2);
+        }
+        html.theme-dark .heat-0 {
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        html.theme-dark input[type="date"],
+        html.theme-dark input[type="time"],
+        html.theme-dark input[type="month"] {
+            color-scheme: dark;
+        }
+    </style>
+</head>
+<body class="antialiased pb-24 relative">
+
+    <!-- Background Blobs -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+        <div class="absolute -top-[10%] -left-[10%] w-[50vw] h-[50vw] rounded-full bg-brand/20 blur-[100px] mix-blend-screen animate-blob"></div>
+        <div class="absolute top-[20%] -right-[10%] w-[40vw] h-[40vw] rounded-full bg-purple-500/15 blur-[100px] mix-blend-screen animate-blob animation-delay-2000"></div>
+        <div class="absolute -bottom-[20%] left-[20%] w-[60vw] h-[60vw] rounded-full bg-pink-500/15 blur-[100px] mix-blend-screen animate-blob animation-delay-4000"></div>
+    </div>
+
+    <!-- Dynamic Island -->
+    <div id="dynamic-island" class="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-black/80 backdrop-blur-xl text-white px-6 py-3 rounded-full font-bold text-sm shadow-[0_8px_32px_rgba(0,0,0,0.3)] border border-white/10 flex items-center gap-3 transform transition-all duration-500 -translate-y-[150%] opacity-0 pointer-events-none">
+        <i id="island-icon" class="fa-solid fa-check-circle text-brand text-lg"></i>
+        <span id="island-text" class="tracking-wide">Success</span>
+    </div>
+
+    <!-- Header -->
+    <header class="sticky top-0 z-40 pt-8 pb-6 px-6 glass-header">
+        <div class="flex justify-between items-center max-w-4xl mx-auto">
+            <div>
+                <h1 class="text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-brand to-purple-500">Najwa Planner</h1>
+                <p id="headerDate" class="text-sm font-semibold text-textMuted mt-1 tracking-wide uppercase"></p>
+            </div>
+            <div class="h-12 w-12 rounded-2xl bg-gradient-to-tr from-brand to-purple-500 text-white flex items-center justify-center shadow-[0_4px_24px_var(--color-brand-glow)] hover:scale-105 transition-transform cursor-pointer">
+                <i class="fa-solid fa-bolt text-xl"></i>
+            </div>
+        </div>
+    </header>
+
+    <main id="mainContainer" class="max-w-4xl mx-auto">
+        
+        <!-- ================= VIEW 1: HUD (DASHBOARD) ================= -->
+        <section id="view-hud" class="p-4 sm:p-6 space-y-8 animate-fade-in pb-20">
+            <!-- Today's Agenda (replaces Welcome Header) -->
+            <div class="bento-card relative overflow-hidden group">
+                <div class="flex justify-between items-center mb-6 relative z-10">
+                    <div>
+                        <h2 class="text-2xl font-black text-textMain tracking-tight flex items-center gap-2">
+                            <i class="fa-solid fa-calendar-day text-brand"></i> Today's Agenda
+                        </h2>
+                        <p class="text-sm font-medium text-textMuted mt-1" id="hud-agenda-date"></p>
+                    </div>
+                    <button onclick="switchView('calendar')" class="text-xs font-bold bg-brand/10 text-brand px-3 py-2 rounded-xl hover:bg-brand/20 transition-colors shadow-sm">
+                        View All
+                    </button>
+                </div>
+                
+                <div id="hud-agenda-container" class="space-y-3 relative z-10 max-h-60 overflow-y-auto pr-2">
+                    <!-- Today's events injected by JS -->
+                </div>
+            </div>
+
+            <!-- Bento Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+                <!-- Timeline -->
+                <div class="bento-card flex flex-col h-full">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-lg font-bold text-textMain flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full bg-brand animate-pulse shadow-[0_0_8px_var(--color-brand)]"></div> Daily Routines</h2>
+                        <button onclick="openRoutineModal()" class="text-sm text-brand font-bold bg-brand/10 hover:bg-brand/20 transition px-3 py-1.5 rounded-xl"><i class="fa-solid fa-plus mr-1"></i>Add</button>
+                    </div>
+                    <div id="routineContainer" class="space-y-4 flex-1">
+                        <!-- Routines injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Inventory -->
+                <div class="bento-card flex flex-col h-full overflow-hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-lg font-bold text-textMain flex items-center gap-2"><i class="fa-solid fa-box-open text-brand"></i> Inventory</h2>
+                        <button onclick="openInventoryModal()" class="text-sm text-brand font-bold bg-brand/10 hover:bg-brand/20 transition px-3 py-1.5 rounded-xl"><i class="fa-solid fa-plus mr-1"></i>Add</button>
+                    </div>
+                    <div id="inventoryContainer" class="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory -mx-2 px-2 scroll-smooth">
+                        <!-- Cards injected by JS -->
+                    </div>
+                </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VIEW 2: LOGBOOK (HISTORY) ================= -->
+        <section id="view-logbook" class="hidden p-6 space-y-8 animate-fade-in pb-20">
+            <div class="flex justify-between items-start sm:items-center flex-col sm:flex-row gap-4 mb-4">
+                <div>
+                    <h2 class="text-3xl font-black text-textMain tracking-tight"><i class="fa-solid fa-book-open mr-3 text-brand"></i>Logbook</h2>
+                    <p class="text-base text-textMuted mt-2 font-medium">Review your completed routines and achievements.</p>
+                </div>
+                <input type="date" id="logbook-date" onchange="renderLogbook()" class="bg-card/60 backdrop-blur-md text-textMain border border-[var(--color-border)] rounded-2xl px-5 py-3 text-sm font-semibold focus:outline-none focus:border-brand shadow-sm w-full sm:w-auto transition-colors">
+            </div>
+            
+            <div class="bento-card relative overflow-hidden">
+                <div class="absolute -bottom-10 -right-10 w-32 h-32 bg-purple-500/10 blur-[40px] rounded-full"></div>
+                <button onclick="toggleHeatmap()" class="w-full flex justify-between items-center relative z-10 text-left focus:outline-none group">
+                    <h3 class="text-base font-bold text-textMain tracking-wide uppercase group-hover:text-brand transition-colors"><i class="fa-solid fa-fire text-brand mr-2"></i> Activity Heatmap</h3>
+                    <div class="w-8 h-8 rounded-full bg-bgPrime border border-[var(--color-border)] flex items-center justify-center text-textMuted group-hover:bg-brand group-hover:text-white group-hover:border-brand transition-all">
+                        <i id="heatmap-icon" class="fa-solid fa-chevron-down transition-transform duration-300"></i>
+                    </div>
+                </button>
+                <div id="heatmap-wrapper" class="hidden mt-6 transition-all duration-300">
+                    <div id="heatmap-grid" class="flex flex-wrap gap-2 relative z-10">
+                        <!-- Heatmap injected by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="logbook-container" class="space-y-5">
+                <!-- Log Cards injected by JS -->
+            </div>
+        </section>
+
+        <!-- ================= VIEW 3: CALENDAR & AGENDA ================= -->
+        <section id="view-calendar" class="hidden p-6 space-y-8 animate-fade-in pb-20">
+            
+            <div class="bento-card">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 id="calendar-month-label" class="text-2xl font-black text-textMain tracking-tight">Month Year</h2>
+                    <div class="flex gap-3">
+                        <button onclick="changeMonth(-1)" class="w-10 h-10 rounded-xl bg-bgPrime border border-[var(--color-border)] text-textMain flex items-center justify-center hover:bg-brand hover:text-white hover:border-brand transition-all shadow-sm"><i class="fa-solid fa-chevron-left"></i></button>
+                        <button onclick="changeMonth(1)" class="w-10 h-10 rounded-xl bg-bgPrime border border-[var(--color-border)] text-textMain flex items-center justify-center hover:bg-brand hover:text-white hover:border-brand transition-all shadow-sm"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-7 gap-2 mb-4 text-center">
+                    <div class="text-xs font-bold text-textMuted uppercase tracking-wider">Su</div>
+                    <div class="text-xs font-bold text-textMuted uppercase tracking-wider">Mo</div>
+                    <div class="text-xs font-bold text-textMuted uppercase tracking-wider">Tu</div>
+                    <div class="text-xs font-bold text-textMuted uppercase tracking-wider">We</div>
+                    <div class="text-xs font-bold text-textMuted uppercase tracking-wider">Th</div>
+                    <div class="text-xs font-bold text-textMuted uppercase tracking-wider">Fr</div>
+                    <div class="text-xs font-bold text-textMuted uppercase tracking-wider">Sa</div>
+                </div>
+                <div id="calendar-grid" class="grid grid-cols-7 gap-2">
+                    <!-- Days injected by JS -->
+                </div>
+            </div>
+
+            <div class="mt-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 id="agenda-date-label" class="font-black text-textMain text-2xl tracking-tight">Agenda</h3>
+                    <button onclick="openEventModal()" class="text-sm text-brand font-bold bg-brand/10 hover:bg-brand/20 transition px-4 py-2 rounded-xl shadow-sm"><i class="fa-solid fa-plus mr-2"></i>Add Event</button>
+                </div>
+                <div id="agenda-list" class="space-y-4">
+                    <!-- Events injected by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VIEW 4: SETTINGS ================= -->
+        <section id="view-settings" class="hidden p-6 space-y-8 animate-fade-in pb-20">
+            <h2 class="text-3xl font-black text-textMain mb-4 tracking-tight"><i class="fa-solid fa-gear mr-3 text-brand"></i>Settings</h2>
+            
+            <div class="bento-card">
+                <h3 class="text-sm font-bold text-brand mb-5 uppercase tracking-widest flex items-center gap-2"><i class="fa-solid fa-palette"></i> Appearance</h3>
+                <div class="grid grid-cols-3 gap-4">
+                    <button onclick="setTheme('theme-light')" class="py-4 rounded-2xl bg-[#f8fafc] text-slate-800 font-bold text-sm border border-slate-200 hover:shadow-lg transition-all focus:ring-4 focus:ring-slate-300">Light</button>
+                    <button onclick="setTheme('theme-dark')" class="py-4 rounded-2xl bg-[#0B0F19] text-white font-bold text-sm border border-slate-800 hover:shadow-lg transition-all focus:ring-4 focus:ring-slate-700">Dark</button>
+                    <button onclick="setTheme('theme-pink')" class="py-4 rounded-2xl bg-[#fff1f2] text-pink-700 font-bold text-sm border border-pink-200 hover:shadow-lg transition-all focus:ring-4 focus:ring-pink-300">Pink</button>
+                </div>
+            </div>
+
+            <div class="bento-card">
+                <h3 class="text-sm font-bold text-brand mb-5 uppercase tracking-widest flex items-center gap-2"><i class="fa-solid fa-sync"></i> P2P Device Sync</h3>
+                <p class="text-xs text-textMuted font-medium mb-4">Sync local data directly to another device via WebRTC. No servers involved.</p>
+                <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                    <div class="flex-1">
+                        <label class="block text-[10px] font-bold text-textMuted uppercase mb-2 tracking-widest">Your Device ID</label>
+                        <div class="flex gap-2">
+                            <input id="my-peer-id" type="text" readonly class="w-full bg-bgPrime border border-[var(--color-border)] rounded-xl p-3 text-textMain text-sm font-medium focus:outline-none shadow-inner opacity-70" placeholder="Not generated">
+                            <button onclick="initPeer()" class="px-4 bg-brand/10 text-brand rounded-xl hover:bg-brand/20 font-bold transition-colors border border-brand/20"><i class="fa-solid fa-power-off"></i></button>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-[10px] font-bold text-textMuted uppercase mb-2 tracking-widest">Connect to ID</label>
+                        <div class="flex gap-2">
+                            <input id="target-peer-id" type="text" placeholder="Enter target ID" class="w-full bg-bgPrime border border-[var(--color-border)] rounded-xl p-3 text-textMain text-sm font-medium focus:border-brand outline-none transition-all shadow-inner">
+                            <button onclick="connectAndSync()" class="px-4 bg-brand text-white shadow-[0_4px_12px_var(--color-brand-glow)] rounded-xl hover:opacity-90 font-bold transition-all"><i class="fa-solid fa-link"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div id="sync-status" class="text-xs font-bold text-center mt-3 hidden text-brand bg-brand/10 p-2 rounded-lg border border-brand/20"></div>
+            </div>
+
+            <div class="bento-card">
+                <h3 class="text-sm font-bold text-brand mb-5 uppercase tracking-widest flex items-center gap-2"><i class="fa-solid fa-database"></i> Reports & Data</h3>
+                <button onclick="openPdfModal()" class="w-full py-4 bg-gradient-to-r from-brand to-purple-600 text-white rounded-2xl font-bold shadow-[0_8px_24px_var(--color-brand-glow)] hover:opacity-90 transition-all flex justify-center items-center text-base"><i class="fa-solid fa-file-pdf mr-3 text-lg"></i>Generate PDF Report</button>
+                
+                <div class="h-px w-full bg-[var(--color-border)] my-6"></div>
+                
+                <button onclick="resetData()" class="w-full py-4 bg-red-500/10 text-red-500 border border-red-500/20 rounded-2xl font-bold hover:bg-red-500/20 hover:border-red-500/30 transition-all flex justify-center items-center text-base"><i class="fa-solid fa-triangle-exclamation mr-3 text-lg"></i>Wipe All Data (Reset)</button>
+            </div>
+
+            <div class="pt-10 pb-6 text-center opacity-60 hover:opacity-100 transition-opacity">
+                <p class="text-xs text-textMuted font-bold tracking-widest">system initialized by nabil aulia dika</p>
+                <p class="text-[10px] text-textMuted mt-2 uppercase font-semibold tracking-[0.2em]">Najwa Planner OS v1.0</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ================= BOTTOM NAVIGATION ================= -->
+    <nav class="fixed bottom-0 w-full max-w-md mx-auto inset-x-0 glass-nav z-50 pb-safe rounded-t-[2.5rem] border-x border-[var(--color-border)] shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
+        <div class="flex justify-around items-center h-20 px-4">
+            <button onclick="switchView('hud')" class="nav-btn active flex flex-col items-center justify-center w-full h-full text-brand transition-all hover:scale-110">
+                <i class="fa-solid fa-house text-2xl mb-1.5 drop-shadow-md"></i>
+                <span class="text-[11px] font-bold tracking-wide">Home</span>
+            </button>
+            <button onclick="switchView('logbook')" class="nav-btn flex flex-col items-center justify-center w-full h-full text-textMuted transition-all hover:scale-110 hover:text-textMain">
+                <i class="fa-solid fa-book-open text-2xl mb-1.5"></i>
+                <span class="text-[11px] font-bold tracking-wide">Logbook</span>
+            </button>
+            <button onclick="switchView('calendar')" class="nav-btn flex flex-col items-center justify-center w-full h-full text-textMuted transition-all hover:scale-110 hover:text-textMain">
+                <i class="fa-solid fa-calendar-days text-2xl mb-1.5"></i>
+                <span class="text-[11px] font-bold tracking-wide">Calendar</span>
+            </button>
+            <button onclick="switchView('settings')" class="nav-btn flex flex-col items-center justify-center w-full h-full text-textMuted transition-all hover:scale-110 hover:text-textMain">
+                <i class="fa-solid fa-bars text-2xl mb-1.5"></i>
+                <span class="text-[11px] font-bold tracking-wide">Settings</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ================= MODALS ================= -->
+
+    <!-- Inventory Modal -->
+    <div id="modal-inventory" class="fixed inset-0 bg-black/60 z-[60] hidden flex items-end sm:items-center justify-center backdrop-blur-sm transition-opacity">
+        <div class="modal-content bg-card w-full sm:w-96 p-8 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl transform transition-all translate-y-full sm:scale-95 duration-300 opacity-0 border border-[var(--color-border)]">
+            <div class="flex justify-between items-center mb-8">
+                <h3 class="text-2xl font-black text-textMain tracking-tight" id="inv-modal-title">Inventory Item</h3>
+                <button onclick="closeModal('modal-inventory')" class="w-8 h-8 rounded-full bg-bgPrime border border-[var(--color-border)] flex items-center justify-center text-textMuted hover:text-textMain hover:bg-brand hover:border-brand hover:text-white transition-all"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-5">
+                <input id="inv-id" type="hidden">
+                <div>
+                    <label class="block text-xs font-bold text-textMuted uppercase mb-2 tracking-wide">Item Name</label>
+                    <input id="inv-name" type="text" class="w-full bg-bgPrime border border-[var(--color-border)] rounded-2xl p-4 text-textMain text-sm font-medium focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all shadow-inner" placeholder="e.g. Coffee Beans">
+                </div>
+                <div class="flex gap-4">
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold text-textMuted uppercase mb-2 tracking-wide">Quantity</label>
+                        <input id="inv-qty" type="number" min="0" class="w-full bg-bgPrime border border-[var(--color-border)] rounded-2xl p-4 text-textMain text-sm font-medium focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all shadow-inner" placeholder="0">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold text-textMuted uppercase mb-2 tracking-wide">Icon (FA Class)</label>
+                        <input id="inv-icon" type="text" class="w-full bg-bgPrime border border-[var(--color-border)] rounded-2xl p-4 text-textMain text-sm font-medium focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all shadow-inner" placeholder="fa-box">
+                    </div>
+                </div>
+                <div class="pt-6 flex gap-3">
+                    <button id="btn-delete-inv" onclick="deleteInventory()" class="hidden py-4 px-5 rounded-2xl font-bold text-red-500 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition-all"><i class="fa-solid fa-trash"></i></button>
+                    <button onclick="saveInventory()" class="flex-1 py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-brand to-purple-500 shadow-[0_8px_24px_var(--color-brand-glow)] hover:opacity-90 transition-all">Save Item</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Routine Modal -->
+    <div id="modal-routine" class="fixed inset-0 bg-black/60 z-[60] hidden flex items-end sm:items-center justify-center backdrop-blur-sm transition-opacity">
+        <div class="modal-content bg-card w-full sm:w-96 p-8 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl transform transition-all translate-y-full sm:scale-95 duration-300 opacity-0 border border-[var(--color-border)]">
+            <div class="flex justify-between items-center mb-8">
+                <h3 class="text-2xl font-black text-textMain tracking-tight">Daily Routine</h3>
+                <button onclick="closeModal('modal-routine')" class="w-8 h-8 rounded-full bg-bgPrime border border-[var(--color-border)] flex items-center justify-center text-textMuted hover:text-textMain hover:bg-brand hover:border-brand hover:text-white transition-all"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-5">
+                <input id="rt-id" type="hidden">
+                <div>
+                    <label class="block text-xs font-bold text-textMuted uppercase mb-2 tracking-wide">Routine Name</label>
+                    <input id="rt-name" type="text" class="w-full bg-bgPrime border border-[var(--color-border)] rounded-2xl p-4 text-textMain text-sm font-medium focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all shadow-inner" placeholder="e.g. Morning Workout">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-textMuted uppercase mb-2 tracking-wide">Time</label>
+                    <input id="rt-time" type="time" class="w-full bg-bgPrime border border-[var(--color-border)] rounded-2xl p-4 text-textMain text-sm font-medium focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all shadow-inner">
+                </div>
+                <div class="pt-6 flex gap-3">
+                    <button id="btn-delete-rt" onclick="deleteRoutine()" class="hidden py-4 px-5 rounded-2xl font-bold text-red-500 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition-all"><i class="fa-solid fa-trash"></i></button>
+                    <button onclick="saveRoutine()" class="flex-1 py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-brand to-purple-500 shadow-[0_8px_24px_var(--color-brand-glow)] hover:opacity-90 transition-all">Save Routine</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Proof of Work Modal -->
+    <div id="powModal" class="fixed inset-0 bg-black/70 z-[60] hidden flex items-end sm:items-center justify-center backdrop-blur-md transition-opacity">
+        <div class="modal-content bg-card w-full sm:w-[28rem] p-8 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl transform transition-all translate-y-full sm:scale-95 duration-300 opacity-0 border border-[var(--color-border)] max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-black text-textMain tracking-tight">Proof of Work</h3>
+                <button onclick="closeModal('powModal')" class="w-8 h-8 rounded-full bg-bgPrime border border-[var(--color-border)] flex items-center justify-center text-textMuted hover:text-textMain hover:bg-brand hover:border-brand hover:text-white transition-all"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="bg-brand/10 border border-brand/20 rounded-2xl p-4 mb-6 text-center">
+                <p id="powTaskName" class="text-brand font-extrabold text-lg tracking-wide"></p>
+            </div>
+            
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-xs font-bold text-textMuted uppercase mb-2 tracking-wide">Completion Note / Journal</label>
+                    <textarea id="powNoteInput" rows="3" class="w-full bg-bgPrime border border-[var(--color-border)] rounded-2xl p-4 text-textMain text-sm font-medium focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all shadow-inner resize-none" placeholder="How did it go? Notes or thoughts..."></textarea>
+                </div>
+                
+                <!-- SECURE VAULT TOGGLE (POW) -->
+                <div class="flex items-center justify-between p-4 bg-bgPrime/60 rounded-2xl border border-[var(--color-border)]">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-brand/10 text-brand flex items-center justify-center"><i class="fa-solid fa-shield-halved"></i></div>
+                        <div>
+                            <p class="text-sm font-bold text-textMain">Secure Vault</p>
+                            <p class="text-[10px] text-textMuted font-medium">Encrypt this note (AES-GCM)</p>
+                        </div>
+                    </div>
+                    <label class="toggle-switch relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="pow-is-secure" class="sr-only">
+                        <div class="w-11 h-6 bg-[var(--color-border)] rounded-full transition-colors duration-300 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform"></div>
+                    </label>
+                </div>
+
+                <label class="block w-full cursor-pointer bg-bgPrime border-2 border-dashed border-[var(--color-border)] rounded-2xl p-8 text-center hover:border-brand hover:bg-brand/5 transition-all group">
+                    <div class="w-16 h-16 bg-[var(--color-card)] rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-camera text-2xl text-textMuted group-hover:text-brand transition-colors"></i>
+                    </div>
+                    <p class="text-base font-bold text-textMain">Upload / Take Photo</p>
+                    <p class="text-xs text-textMuted mt-1 font-medium">Auto-compress &lt; 150kb</p>
+                    <input type="file" accept="image/*" class="hidden" id="powImageInput" onchange="handleImageCompress(event)">
+                </label>
+                
+                <div id="powPreviewContainer" class="hidden relative rounded-2xl overflow-hidden border border-[var(--color-border)] h-48 shadow-inner group">
+                    <img id="powPreviewImg" src="" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <button onclick="clearPowImage()" class="bg-red-500 text-white rounded-full w-12 h-12 flex items-center justify-center hover:bg-red-600 hover:scale-110 transition-all shadow-lg"><i class="fa-solid fa-trash text-lg"></i></button>
+                    </div>
+                </div>
+
+                <div class="pt-4 flex gap-3">
+                    <button onclick="saveLog(false)" class="flex-1 py-4 rounded-2xl font-bold text-textMain bg-bgPrime border border-[var(--color-border)] hover:border-textMuted transition-all">Skip Photo</button>
+                    <button onclick="saveLog(true)" class="flex-[2] py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-brand to-purple-500 shadow-[0_8px_24px_var(--color-brand-glow)] hover:opacity-90 transition-all">Submit & Complete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event/Agenda Modal -->
+    <div id="modal-event" class="fixed inset-0 bg-black/70 z-[60] hidden flex items-end sm:items-center justify-center backdrop-blur-md transition-opacity">
+        <div class="modal-content bg-card w-full sm:w-[28rem] p-8 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl transform transition-all translate-y-full sm:scale-95 duration-300 opacity-0 border border-[var(--color-border)] max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-8">
+                <h3 class="text-2xl font-black text-textMain tracking-tight">Event Details</h3>
+                <button onclick="closeModal('modal-event')" class="w-8 h-8 rounded-full bg-bgPrime border border-[var(--color-border)] flex items-center justify-center text-textMuted hover:text-textMain hover:bg-brand hover:border-brand hover:text-white transition-all"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-5">
+                <input id="ev-id" type="hidden">
+                <div class="flex gap-4">
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold text-textMuted uppercase mb-2 tracking-wide">Date</label>
+                        <input id="ev-date" type="date" class="w-full bg-bgPrime border border-[var(--color-border)] rounded-2xl p-4 text-textMain text-sm font-medium focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all shadow-inner">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold text-textMuted uppercase mb-2 tracking-wide">Time</label>
+                        <input id="ev-time" type="time" class="w-full bg-bgPrime border border-[var(--color-border)] rounded-2xl p-4 text-textMain text-sm font-medium focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all shadow-inner">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-textMuted uppercase mb-2 tracking-wide">Title</label>
+                    <input id="ev-title" type="text" class="w-full bg-bgPrime border border-[var(--color-border)] rounded-2xl p-4 text-textMain text-sm font-medium focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all shadow-inner" placeholder="Event Title">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-textMuted uppercase mb-2 tracking-wide">Location</label>
+                    <input id="ev-location" type="text" class="w-full bg-bgPrime border border-[var(--color-border)] rounded-2xl p-4 text-textMain text-sm font-medium focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all shadow-inner" placeholder="Optional Location">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-textMuted uppercase mb-2 tracking-wide">Notes & Description</label>
+                    <textarea id="ev-desc" rows="3" class="w-full bg-bgPrime border border-[var(--color-border)] rounded-2xl p-4 text-textMain text-sm font-medium focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all shadow-inner resize-none" placeholder="Details..."></textarea>
+                    
+                    <!-- SECURE VAULT TOGGLE -->
+                    <div class="flex items-center justify-between p-4 bg-bgPrime/60 rounded-2xl border border-[var(--color-border)] mt-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-brand/10 text-brand flex items-center justify-center"><i class="fa-solid fa-lock"></i></div>
+                            <div>
+                                <p class="text-sm font-bold text-textMain">Lock as Secure Vault</p>
+                                <p class="text-[10px] text-textMuted font-medium">Require PIN to read/edit</p>
+                            </div>
+                        </div>
+                        <label class="toggle-switch relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="ev-is-secure" class="sr-only">
+                            <div class="w-11 h-6 bg-[var(--color-border)] rounded-full transition-colors duration-300 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform"></div>
+                        </label>
+                    </div>
+                </div>
+                <div class="pt-6 flex gap-3">
+                    <button id="btn-delete-ev" onclick="deleteEvent()" class="hidden py-4 px-5 rounded-2xl font-bold text-red-500 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition-all"><i class="fa-solid fa-trash"></i></button>
+                    <button onclick="saveEvent()" class="flex-1 py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-brand to-purple-500 shadow-[0_8px_24px_var(--color-brand-glow)] hover:opacity-90 transition-all">Save Event</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PIN Modal -->
+    <div id="modal-pin" class="fixed inset-0 bg-black/90 z-[70] hidden flex items-center justify-center backdrop-blur-xl transition-opacity">
+        <div class="modal-content bg-card w-80 p-8 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] transform transition-all scale-95 duration-300 opacity-0 border border-white/10 text-center relative overflow-hidden">
+            <div class="absolute -top-10 -left-10 w-32 h-32 bg-brand/20 blur-[30px] rounded-full"></div>
+            <div class="w-16 h-16 bg-gradient-to-br from-brand to-purple-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-[0_8px_24px_var(--color-brand-glow)] relative z-10"><i class="fa-solid fa-shield-halved text-3xl"></i></div>
+            <h3 class="text-2xl font-black text-textMain mb-2 relative z-10">Vault PIN</h3>
+            <p class="text-xs font-semibold text-textMuted mb-6 relative z-10">Enter 4-digit PIN for AES-GCM encryption</p>
+            <input type="password" id="vault-pin" maxlength="4" inputmode="numeric" class="w-full bg-bgPrime border border-[var(--color-border)] text-center tracking-[0.8em] font-mono text-3xl rounded-2xl py-4 text-textMain focus:border-brand focus:ring-2 focus:ring-brand/30 outline-none transition-all mb-8 shadow-inner relative z-10">
+            <div class="flex gap-3 relative z-10">
+                <button onclick="cancelPinPrompt()" class="flex-1 py-3.5 rounded-2xl font-bold text-textMain bg-bgPrime border border-[var(--color-border)] hover:bg-[var(--color-border)] transition-all">Cancel</button>
+                <button onclick="submitPinPrompt()" class="flex-1 py-3.5 rounded-2xl font-bold text-white bg-brand shadow-[0_8px_24px_var(--color-brand-glow)] hover:opacity-90 transition-all">Unlock</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PDF Generator Modal -->
+    <div id="modal-pdf" class="fixed inset-0 bg-black/60 z-[60] hidden flex items-end sm:items-center justify-center backdrop-blur-sm transition-opacity">
+        <div class="modal-content bg-card w-full sm:w-[28rem] p-8 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl transform transition-all translate-y-full sm:scale-95 duration-300 opacity-0 border border-[var(--color-border)]">
+            <div class="flex justify-between items-center mb-8">
+                <h3 class="text-2xl font-black text-textMain tracking-tight">Generate Report</h3>
+                <button onclick="closeModal('modal-pdf')" class="w-8 h-8 rounded-full bg-bgPrime border border-[var(--color-border)] flex items-center justify-center text-textMuted hover:text-textMain hover:bg-brand hover:border-brand hover:text-white transition-all"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-xs font-bold text-textMuted uppercase mb-2 tracking-wide">Report Type</label>
+                    <div class="relative">
+                        <select id="pdf-type" onchange="togglePdfInputs()" class="w-full bg-bgPrime border border-[var(--color-border)] rounded-2xl p-4 text-textMain text-sm font-medium focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all appearance-none shadow-inner cursor-pointer">
+                            <option value="history">History / Logbook</option>
+                            <option value="calendar">Calendar Agenda</option>
+                            <option value="inventory">Inventory Status</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-textMuted pointer-events-none"></i>
+                    </div>
+                </div>
+                
+                <div id="pdf-history-inputs" class="flex gap-4">
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold text-textMuted uppercase mb-2 tracking-wide">Start Date</label>
+                        <input id="pdf-start-date" type="date" class="w-full bg-bgPrime border border-[var(--color-border)] rounded-2xl p-4 text-textMain text-sm font-medium focus:border-brand outline-none transition-all shadow-inner">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold text-textMuted uppercase mb-2 tracking-wide">End Date</label>
+                        <input id="pdf-end-date" type="date" class="w-full bg-bgPrime border border-[var(--color-border)] rounded-2xl p-4 text-textMain text-sm font-medium focus:border-brand outline-none transition-all shadow-inner">
+                    </div>
+                </div>
+                
+                <div id="pdf-calendar-inputs" class="hidden">
+                    <label class="block text-xs font-bold text-textMuted uppercase mb-2 tracking-wide">Select Month</label>
+                    <input id="pdf-month" type="month" class="w-full bg-bgPrime border border-[var(--color-border)] rounded-2xl p-4 text-textMain text-sm font-medium focus:border-brand outline-none transition-all shadow-inner">
+                </div>
+
+                <div class="pt-6">
+                    <button onclick="generatePDF()" class="w-full py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-brand to-purple-500 shadow-[0_8px_24px_var(--color-brand-glow)] hover:opacity-90 transition-all flex justify-center items-center text-base"><i class="fa-solid fa-print mr-3 text-lg"></i>Create PDF</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ================= JAVASCRIPT ENGINE ================= -->
+    <script>
+        // --- Core Constants & DB ---
+        const DB_NAME = 'NajwaPlannerDB_v2';
+        const DB_VERSION = 1;
+        let db;
+        let currentEditingTask = null;
+        let compressedImageBase64 = null;
+        
+        let currentMonth = new Date();
+        let selectedDate = new Date().toISOString().split('T')[0];
+
+        // 03:00 AM Rollover
+        function getLogicalDate() {
+            const now = new Date();
+            now.setHours(now.getHours() - 3); 
+            return now.toISOString().split('T')[0];
+        }
+
+        // --- Haptic & Notifications ---
+        function hapticFeedback() {
+            if(navigator.vibrate) navigator.vibrate(50);
+        }
+        function showIsland(message, icon = 'fa-check-circle', isError = false) {
+            hapticFeedback();
+            const island = document.getElementById('dynamic-island');
+            document.getElementById('island-text').innerText = message;
+            document.getElementById('island-icon').className = `fa-solid ${icon} ${isError ? 'text-red-500' : 'text-brand'} text-lg`;
+            island.classList.remove('-translate-y-[150%]', 'opacity-0');
+            island.classList.add('translate-y-0', 'opacity-100');
+            setTimeout(() => {
+                island.classList.remove('translate-y-0', 'opacity-100');
+                island.classList.add('-translate-y-[150%]', 'opacity-0');
+            }, 3000);
+        }
+
+        // --- WebRTC PeerJS Sync ---
+        let peer = null;
+        let conn = null;
+
+        function initPeer() {
+            if(peer) return;
+            document.getElementById('my-peer-id').value = "Generating...";
+            peer = new Peer();
+            peer.on('open', (id) => {
+                document.getElementById('my-peer-id').value = id;
+                showIsland("Device ID Generated", "fa-id-badge");
+            });
+            peer.on('connection', (connection) => {
+                conn = connection;
+                setupConnection();
+            });
+            peer.on('error', (err) => {
+                showIsland("Sync Error", "fa-xmark", true);
+                console.error(err);
+            });
+        }
+
+        function connectAndSync() {
+            if(!peer) return showIsland("Initialize your ID first", "fa-power-off", true);
+            const targetId = document.getElementById('target-peer-id').value.trim();
+            if(!targetId) return showIsland("Enter target ID", "fa-keyboard", true);
+            
+            const syncStatus = document.getElementById('sync-status');
+            syncStatus.innerText = "Connecting...";
+            syncStatus.classList.remove('hidden');
+            
+            conn = peer.connect(targetId);
+            setupConnection();
+        }
+
+        function setupConnection() {
+            const syncStatus = document.getElementById('sync-status');
+            conn.on('open', () => {
+                showIsland("Connected!", "fa-link");
+                syncStatus.innerText = "Connected. Exporting data...";
+                
+                exportDatabase().then(data => {
+                    conn.send({ type: 'sync_data', payload: data });
+                    syncStatus.innerText = "Data sent to peer.";
+                });
+            });
+            
+            conn.on('data', async (data) => {
+                if(data.type === 'sync_data') {
+                    syncStatus.innerText = "Receiving data...";
+                    await importDatabase(data.payload);
+                    syncStatus.innerText = "Sync Complete!";
+                    showIsland("Sync Complete!", "fa-check-double");
+                    refreshAllViews();
+                }
+            });
+        }
+
+        async function exportDatabase() {
+            const data = {};
+            for(let storeName of ['routines', 'logs', 'inventory', 'events']) {
+                data[storeName] = await getAllStoreData(storeName);
+            }
+            return data;
+        }
+
+        async function importDatabase(data) {
+            for(let storeName of Object.keys(data)) {
+                const tx = db.transaction(storeName, 'readwrite');
+                const store = tx.objectStore(storeName);
+                await new Promise(resolve => {
+                    const req = store.clear();
+                    req.onsuccess = () => resolve();
+                });
+                for(let item of data[storeName]) {
+                    store.put(item);
+                }
+            }
+        }
+
+        // --- Web Crypto Vault ---
+        const CryptoUtils = {
+            async encrypt(text, pin) {
+                const enc = new TextEncoder();
+                const iv = crypto.getRandomValues(new Uint8Array(12));
+                const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(pin), {name: "PBKDF2"}, false, ["deriveKey"]);
+                const salt = crypto.getRandomValues(new Uint8Array(16));
+                const key = await crypto.subtle.deriveKey(
+                    {name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256"},
+                    keyMaterial, {name: "AES-GCM", length: 256}, false, ["encrypt"]
+                );
+                const cipher = await crypto.subtle.encrypt({name: "AES-GCM", iv}, key, enc.encode(text));
+                return JSON.stringify({
+                    v: 1,
+                    cipher: Array.from(new Uint8Array(cipher)),
+                    iv: Array.from(iv),
+                    salt: Array.from(salt)
+                });
+            },
+            async decrypt(dataStr, pin) {
+                try {
+                    const data = JSON.parse(dataStr);
+                    const enc = new TextEncoder();
+                    const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(pin), {name: "PBKDF2"}, false, ["deriveKey"]);
+                    const key = await crypto.subtle.deriveKey(
+                        {name: "PBKDF2", salt: new Uint8Array(data.salt), iterations: 100000, hash: "SHA-256"},
+                        keyMaterial, {name: "AES-GCM", length: 256}, false, ["decrypt"]
+                    );
+                    const plain = await crypto.subtle.decrypt({name: "AES-GCM", iv: new Uint8Array(data.iv)}, key, new Uint8Array(data.cipher));
+                    return new TextDecoder().decode(plain);
+                } catch(e) {
+                    return null;
+                }
+            }
+        };
+
+        function requestPIN() {
+            return new Promise((resolve, reject) => {
+                document.getElementById('vault-pin').value = '';
+                openModal('modal-pin');
+                setTimeout(() => document.getElementById('vault-pin').focus(), 100);
+                window.submitPinPrompt = () => {
+                    const pin = document.getElementById('vault-pin').value;
+                    closeModal('modal-pin');
+                    if(pin.length >= 4) resolve(pin); else { showIsland("Invalid PIN", "fa-xmark", true); reject('Invalid PIN'); }
+                };
+                window.cancelPinPrompt = () => {
+                    closeModal('modal-pin');
+                    reject('Cancelled');
+                };
+            });
+        }
+
+        // --- Database Setup ---
+        function initDB() {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            
+            request.onupgradeneeded = (e) => {
+                db = e.target.result;
+                if (!db.objectStoreNames.contains('routines')) db.createObjectStore('routines', { keyPath: 'id' });
+                if (!db.objectStoreNames.contains('logs')) db.createObjectStore('logs', { autoIncrement: true });
+                if (!db.objectStoreNames.contains('inventory')) db.createObjectStore('inventory', { keyPath: 'id' });
+                if (!db.objectStoreNames.contains('events')) {
+                    const evStore = db.createObjectStore('events', { keyPath: 'id' });
+                    evStore.createIndex('date', 'date', { unique: false });
+                }
+            };
+
+            request.onsuccess = (e) => {
+                db = e.target.result;
+                checkInitialData();
+            };
+
+            request.onerror = (e) => {
+                console.error("IndexedDB error:", e);
+                showIsland("Database Error", "fa-triangle-exclamation", true);
+            };
+        }
+
+        // --- Initial Data Seeding (Removed Dummy Data) ---
+        function checkInitialData() {
+            // Keep DB clean for new users. No dummy data injected.
+            refreshAllViews();
+        }
+
+        // --- DB Helpers ---
+        function getAllStoreData(storeName) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readonly');
+                const req = tx.objectStore(storeName).getAll();
+                req.onsuccess = e => resolve(e.target.result);
+                req.onerror = e => reject(e);
+            });
+        }
+        function getStoreData(storeName, id) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readonly');
+                const req = tx.objectStore(storeName).get(id);
+                req.onsuccess = e => resolve(e.target.result);
+                req.onerror = e => reject(e);
+            });
+        }
+        function putStoreData(storeName, data) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readwrite');
+                tx.objectStore(storeName).put(data);
+                tx.oncomplete = () => resolve();
+                tx.onerror = e => reject(e);
+            });
+        }
+        function deleteStoreData(storeName, id) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readwrite');
+                tx.objectStore(storeName).delete(id);
+                tx.oncomplete = () => resolve();
+                tx.onerror = e => reject(e);
+            });
+        }
+
+        // --- Modals Logic ---
+        function openModal(id) {
+            const m = document.getElementById(id);
+            m.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                m.querySelector('.modal-content').classList.remove('translate-y-full', 'sm:scale-95', 'opacity-0');
+            });
+        }
+        function closeModal(id) {
+            const m = document.getElementById(id);
+            m.querySelector('.modal-content').classList.add('translate-y-full', 'sm:scale-95', 'opacity-0');
+            setTimeout(() => m.classList.add('hidden'), 300);
+        }
+
+        // --- UI Logic: Navigation & Theme ---
+        function toggleHeatmap() {
+            hapticFeedback();
+            const wrapper = document.getElementById('heatmap-wrapper');
+            const icon = document.getElementById('heatmap-icon');
+            if(wrapper.classList.contains('hidden')) {
+                wrapper.classList.remove('hidden');
+                icon.classList.add('rotate-180');
+            } else {
+                wrapper.classList.add('hidden');
+                icon.classList.remove('rotate-180');
+            }
+        }
+
+        function switchView(viewId) {
+            document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
+            document.getElementById(`view-${viewId}`).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-brand', 'active', 'scale-110');
+                btn.classList.add('text-textMuted');
+                // update icon style
+                btn.querySelector('i').classList.remove('drop-shadow-md', 'text-brand');
+            });
+            event.currentTarget.classList.remove('text-textMuted');
+            event.currentTarget.classList.add('text-brand', 'active', 'scale-110');
+            event.currentTarget.querySelector('i').classList.add('drop-shadow-md', 'text-brand');
+
+            if(viewId === 'logbook') renderLogbook();
+            if(viewId === 'calendar') { renderCalendar(); renderAgenda(); }
+        }
+
+        function setTheme(themeClass) {
+            document.documentElement.className = themeClass; 
+            localStorage.setItem('najwaTheme', themeClass);
+            
+            const meta = document.getElementById('theme-color-meta');
+            if(themeClass === 'theme-pink') meta.content = '#fdf2f8';
+            else if(themeClass === 'theme-dark') meta.content = '#0B0F19';
+            else meta.content = '#f8fafc';
+        }
+
+        function refreshAllViews() {
+            loadHUD();
+            renderLogbook();
+            renderCalendar();
+            renderAgenda();
+            
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('headerDate').innerText = new Date().toLocaleDateString('en-US', options);
+            document.getElementById('logbook-date').value = getLogicalDate();
+            
+            const nowStr = new Date().toISOString().split('T')[0];
+            document.getElementById('pdf-start-date').value = nowStr;
+            document.getElementById('pdf-end-date').value = nowStr;
+            document.getElementById('pdf-month').value = nowStr.substring(0,7);
+        }
+
+        // --- View 1: HUD ---
+        function loadHUD() {
+            const invContainer = document.getElementById('inventoryContainer');
+            invContainer.innerHTML = '';
+            
+            getAllStoreData('inventory').then(items => {
+                if(items.length === 0) {
+                    invContainer.innerHTML = `<p class="text-sm text-textMuted italic p-2">No inventory added.</p>`;
+                }
+                items.forEach(item => {
+                    if(item.qty <= 0) return;
+                    const card = document.createElement('div');
+                    card.className = 'flex-shrink-0 w-44 bg-card/80 backdrop-blur-md border border-[var(--color-border)] rounded-3xl p-5 shadow-sm snap-start select-none group flex flex-col justify-between hover:border-brand/30 transition-colors';
+                    card.innerHTML = `
+                        <div>
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="w-12 h-12 rounded-2xl bg-brand/10 text-brand flex items-center justify-center text-xl shadow-inner"><i class="fa-solid ${item.icon || 'fa-box'}"></i></div>
+                                <button onclick="openInventoryModal('${item.id}')" class="text-textMuted hover:text-brand transition z-10 p-2 bg-bgPrime rounded-full"><i class="fa-solid fa-pen text-xs"></i></button>
+                            </div>
+                            <h3 class="text-base font-bold text-textMain leading-tight mb-1 truncate pr-2">${item.name}</h3>
+                            <p class="text-xs text-textMuted font-bold mb-5 tracking-wide">STOCK: <span class="text-brand text-sm">${item.qty}</span></p>
+                        </div>
+                        <button onclick="consumeItemById('${item.id}')" class="w-full py-2.5 bg-bgPrime hover:bg-brand hover:text-white border border-[var(--color-border)] hover:border-transparent rounded-xl text-xs font-bold text-textMain transition-all flex items-center justify-center gap-2 shadow-sm">
+                            <i class="fa-solid fa-minus text-[10px]"></i> Consume
+                        </button>
+                    `;
+                    invContainer.appendChild(card);
+                });
+            });
+
+            const rtContainer = document.getElementById('routineContainer');
+            rtContainer.innerHTML = '';
+            
+            Promise.all([getAllStoreData('logs'), getAllStoreData('routines')]).then(([logs, routines]) => {
+                if(routines.length === 0) {
+                    rtContainer.innerHTML = `<p class="text-sm text-textMuted italic p-2">No routines added.</p>`;
+                }
+                const todayLogs = logs.filter(l => l.date === getLogicalDate());
+                const loggedNames = todayLogs.map(l => l.taskName);
+
+                routines.sort((a,b) => a.time.localeCompare(b.time)).forEach(rt => {
+                    const isDone = loggedNames.includes(rt.name);
+                    const card = document.createElement('div');
+                    card.className = `flex items-center p-5 rounded-3xl border backdrop-blur-md ${isDone ? 'bg-brand/5 border-brand/20' : 'bg-card/80 border-[var(--color-border)]'} shadow-sm transition-all hover:shadow-md group`;
+                    card.innerHTML = `
+                        <button onclick="${isDone ? '' : `triggerPoW('${rt.name}')`}" class="w-10 h-10 rounded-full border-2 flex items-center justify-center mr-4 transition-all shadow-sm shrink-0 ${isDone ? 'bg-gradient-to-br from-brand to-purple-500 border-transparent text-white shadow-[0_4px_16px_var(--color-brand-glow)]' : 'border-[var(--color-border)] text-transparent bg-bgPrime hover:border-brand'}">
+                            <i class="fa-solid fa-check text-sm"></i>
+                        </button>
+                        <div class="flex-1 overflow-hidden">
+                            <h3 class="text-base font-bold truncate pr-2 ${isDone ? 'text-brand line-through opacity-70' : 'text-textMain'}">${rt.name}</h3>
+                            <p class="text-xs text-textMuted font-bold mt-1 flex items-center gap-1.5"><i class="fa-regular fa-clock"></i> ${rt.time}</p>
+                        </div>
+                        <button onclick="openRoutineModal('${rt.id}')" class="w-8 h-8 rounded-full bg-bgPrime text-textMuted hover:text-brand hover:bg-brand/10 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 border border-[var(--color-border)]"><i class="fa-solid fa-pen text-xs"></i></button>
+                    `;
+                    rtContainer.appendChild(card);
+                });
+            });
+
+            // Load Today's Agenda
+            const agendaContainer = document.getElementById('hud-agenda-container');
+            const agendaDateLabel = document.getElementById('hud-agenda-date');
+            if(agendaContainer && agendaDateLabel) {
+                agendaContainer.innerHTML = '';
+                const todayStr = new Date().toISOString().split('T')[0];
+                agendaDateLabel.innerText = new Date().toLocaleDateString('en-US', {weekday: 'long', month: 'long', day: 'numeric'});
+                
+                getAllStoreData('events').then(events => {
+                    const todayEvents = events.filter(e => e.date === todayStr).sort((a,b) => (a.time || '').localeCompare(b.time || ''));
+                    
+                    if(todayEvents.length === 0) {
+                        agendaContainer.innerHTML = `<div class="py-6 text-center text-textMuted/70">
+                            <i class="fa-solid fa-mug-hot text-3xl mb-3 opacity-50"></i>
+                            <p class="text-sm font-bold">No events today. Enjoy your free time!</p>
+                        </div>`;
+                        return;
+                    }
+                    
+                    todayEvents.forEach(evt => {
+                        agendaContainer.innerHTML += `
+                            <div class="flex items-center p-4 rounded-2xl bg-bgPrime border border-[var(--color-border)] shadow-sm hover:border-purple-500/30 transition-colors group">
+                                <div class="w-1.5 h-10 bg-gradient-to-b from-brand to-purple-500 rounded-full mr-4 opacity-70 group-hover:opacity-100 transition-opacity"></div>
+                                <div class="flex-1 overflow-hidden">
+                                    <h4 class="font-bold text-textMain text-sm truncate pr-2">${evt.title}</h4>
+                                    <div class="flex items-center gap-3 mt-1 text-[10px] text-textMuted font-bold uppercase tracking-wider">
+                                        ${evt.time ? `<span><i class="fa-regular fa-clock text-brand mr-1"></i>${evt.time}</span>` : ''}
+                                        ${evt.location ? `<span class="truncate"><i class="fa-solid fa-location-dot text-purple-500 mr-1"></i>${evt.location}</span>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                });
+            }
+        }
+
+        function consumeItemById(itemId) {
+            hapticFeedback();
+            getStoreData('inventory', itemId).then(item => {
+                if(item && item.qty > 0) {
+                    item.qty -= 1;
+                    putStoreData('inventory', item).then(() => {
+                        loadHUD();
+                        showIsland(`Consumed ${item.name}`, "fa-cookie-bite");
+                    });
+                }
+            });
+        }
+
+        // HUD Modals (Inventory, Routine)
+        function openInventoryModal(id = null) {
+            if(id) {
+                getStoreData('inventory', id).then(item => {
+                    document.getElementById('inv-id').value = item.id;
+                    document.getElementById('inv-name').value = item.name;
+                    document.getElementById('inv-qty').value = item.qty;
+                    document.getElementById('inv-icon').value = item.icon || 'fa-box';
+                    document.getElementById('btn-delete-inv').classList.remove('hidden');
+                    openModal('modal-inventory');
+                });
+            } else {
+                document.getElementById('inv-id').value = '';
+                document.getElementById('inv-name').value = '';
+                document.getElementById('inv-qty').value = 1;
+                document.getElementById('inv-icon').value = 'fa-box';
+                document.getElementById('btn-delete-inv').classList.add('hidden');
+                openModal('modal-inventory');
+            }
+        }
+        function saveInventory() {
+            const id = document.getElementById('inv-id').value || 'inv_' + Date.now();
+            const name = document.getElementById('inv-name').value.trim();
+            const qty = parseInt(document.getElementById('inv-qty').value) || 0;
+            const icon = document.getElementById('inv-icon').value.trim();
+            if(!name) return showIsland("Item Name required", "fa-triangle-exclamation", true);
+            putStoreData('inventory', {id, name, qty, icon}).then(() => { 
+                closeModal('modal-inventory'); 
+                loadHUD(); 
+                showIsland("Item Saved", "fa-box"); 
+            });
+        }
+        function deleteInventory() {
+            if(confirm("Delete this item?")) {
+                deleteStoreData('inventory', document.getElementById('inv-id').value).then(() => { closeModal('modal-inventory'); loadHUD(); });
+            }
+        }
+
+        function openRoutineModal(id = null) {
+            if(id) {
+                getStoreData('routines', id).then(rt => {
+                    document.getElementById('rt-id').value = rt.id;
+                    document.getElementById('rt-name').value = rt.name;
+                    document.getElementById('rt-time').value = rt.time;
+                    document.getElementById('btn-delete-rt').classList.remove('hidden');
+                    openModal('modal-routine');
+                });
+            } else {
+                document.getElementById('rt-id').value = '';
+                document.getElementById('rt-name').value = '';
+                document.getElementById('rt-time').value = '09:00';
+                document.getElementById('btn-delete-rt').classList.add('hidden');
+                openModal('modal-routine');
+            }
+        }
+        function saveRoutine() {
+            const id = document.getElementById('rt-id').value || 'rt_' + Date.now();
+            const name = document.getElementById('rt-name').value.trim();
+            const time = document.getElementById('rt-time').value;
+            if(!name || !time) return showIsland("Name and Time required", "fa-triangle-exclamation", true);
+            putStoreData('routines', {id, name, time}).then(() => { 
+                closeModal('modal-routine'); 
+                loadHUD(); 
+                showIsland("Routine Saved", "fa-list-check"); 
+            });
+        }
+        function deleteRoutine() {
+            if(confirm("Delete this routine?")) {
+                deleteStoreData('routines', document.getElementById('rt-id').value).then(() => { closeModal('modal-routine'); loadHUD(); });
+            }
+        }
+
+        // Proof of Work
+        function triggerPoW(taskName) {
+            currentEditingTask = taskName;
+            document.getElementById('powTaskName').innerText = taskName;
+            document.getElementById('powNoteInput').value = '';
+            document.getElementById('pow-is-secure').checked = false;
+            clearPowImage();
+            openModal('powModal');
+        }
+
+        function handleImageCompress(event) {
+            const file = event.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800;
+                    const scaleSize = Math.min(MAX_WIDTH / img.width, 1);
+                    canvas.width = img.width * scaleSize;
+                    canvas.height = img.height * scaleSize;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    compressedImageBase64 = canvas.toDataURL('image/jpeg', 0.6);
+                    document.getElementById('powPreviewImg').src = compressedImageBase64;
+                    document.getElementById('powPreviewContainer').classList.remove('hidden');
+                }
+            };
+        }
+
+        function clearPowImage() {
+            compressedImageBase64 = null;
+            document.getElementById('powImageInput').value = '';
+            document.getElementById('powPreviewContainer').classList.add('hidden');
+            document.getElementById('powPreviewImg').src = '';
+        }
+
+        async function saveLog(requirePhoto) {
+            if(requirePhoto && !compressedImageBase64) return showIsland("Please upload a photo!", "fa-camera", true);
+            let note = document.getElementById('powNoteInput').value.trim();
+            const isSecure = document.getElementById('pow-is-secure').checked;
+            
+            if (isSecure && note) {
+                try {
+                    const pin = await requestPIN();
+                    note = await CryptoUtils.encrypt(note, pin);
+                    showIsland("Vault Note Secured", "fa-lock");
+                } catch(e) {
+                    return; // cancelled
+                }
+            }
+
+            const logData = {
+                date: getLogicalDate(),
+                realTime: new Date().toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: false}),
+                taskName: currentEditingTask,
+                note: note,
+                isSecure: isSecure,
+                image: compressedImageBase64 || null
+            };
+            putStoreData('logs', logData).then(() => { 
+                closeModal('powModal'); 
+                showIsland("Routine Logged!", "fa-fire");
+                loadHUD();
+                
+                // Check 100% completion for confetti
+                Promise.all([getAllStoreData('logs'), getAllStoreData('routines')]).then(([logs, routines]) => {
+                    const todayLogs = logs.filter(l => l.date === getLogicalDate());
+                    const loggedNames = todayLogs.map(l => l.taskName);
+                    const doneRoutines = routines.filter(rt => loggedNames.includes(rt.name));
+                    if(routines.length > 0 && doneRoutines.length === routines.length) {
+                        if(!localStorage.getItem('confetti_' + getLogicalDate())) {
+                            localStorage.setItem('confetti_' + getLogicalDate(), '1');
+                            confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 }, zIndex: 200, colors: ['#4f46e5', '#f43f5e', '#a855f7'] });
+                            setTimeout(() => showIsland("Perfect Day Achieved!", "fa-trophy"), 1000);
+                        }
+                    }
+                });
+            });
+        }
+
+        // --- View 2: Logbook ---
+        function renderLogbook() {
+            const dateFilter = document.getElementById('logbook-date').value;
+            const container = document.getElementById('logbook-container');
+            container.innerHTML = '';
+
+            getAllStoreData('logs').then(logs => {
+                // Render Heatmap
+                const hGrid = document.getElementById('heatmap-grid');
+                hGrid.innerHTML = '';
+                const today = new Date(getLogicalDate());
+                for(let i = 29; i >= 0; i--) {
+                    const d = new Date(today);
+                    d.setDate(today.getDate() - i);
+                    const dStr = d.toISOString().split('T')[0];
+                    const count = logs.filter(l => l.date === dStr).length;
+                    let opacityClass = count === 0 ? 'heat-0' : 
+                                  count < 3 ? 'bg-brand/30 border border-white/5' : 
+                                  count < 5 ? 'bg-brand/60 border border-white/5' : 'bg-gradient-to-br from-brand to-purple-500 shadow-[0_0_12px_var(--color-brand-glow)] border border-transparent';
+                    hGrid.innerHTML += `<div class="w-5 h-5 sm:w-6 sm:h-6 rounded-md ${opacityClass} transition-all hover:scale-125 cursor-pointer" title="${dStr}: ${count} logs"></div>`;
+                }
+
+                let filtered = logs.reverse();
+                if (dateFilter) filtered = filtered.filter(l => l.date === dateFilter);
+                
+                if(filtered.length === 0) {
+                    container.innerHTML = `<div class="p-10 text-center text-textMuted bg-card/60 rounded-3xl border border-[var(--color-border)] shadow-sm backdrop-blur-md">
+                        <i class="fa-solid fa-ghost text-5xl mb-4 opacity-20"></i>
+                        <p class="font-bold text-base">No records found.</p>
+                        <p class="text-xs mt-2 opacity-70">Conquer your day and log your routines!</p>
+                    </div>`;
+                    return;
+                }
+
+                filtered.forEach(log => {
+                    const d = new Date(log.date);
+                    const niceDate = d.toLocaleDateString('en-US', {weekday:'short', day: 'numeric', month:'short'});
+                    container.innerHTML += `
+                        <div class="p-6 rounded-3xl bg-card border border-[var(--color-border)] shadow-sm relative overflow-hidden transition-all hover:shadow-md">
+                            <div class="absolute top-0 right-0 w-32 h-32 bg-brand/5 rounded-bl-[100px] -z-10"></div>
+                            <div class="flex items-start mb-4">
+                                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand to-purple-500 text-white flex items-center justify-center mr-4 shadow-[0_4px_16px_var(--color-brand-glow)] shrink-0"><i class="fa-solid fa-check text-lg"></i></div>
+                                <div class="flex-1 overflow-hidden">
+                                    <h3 class="font-black text-textMain text-base truncate pr-2 tracking-wide">${log.taskName}</h3>
+                                    <p class="text-[11px] text-brand font-bold mt-1 tracking-wider uppercase">${niceDate} • ${log.realTime}</p>
+                                </div>
+                            </div>
+                            ${log.note ? `<div class="mt-4 bg-bgPrime/80 rounded-2xl p-4 border border-[var(--color-border)] shadow-inner"><p class="text-sm text-textMain leading-relaxed relative z-10 font-medium">${log.isSecure ? '<i class="fa-solid fa-lock text-brand mr-2"></i> [Encrypted Vault Note]' : log.note}</p></div>` : ''}
+                            ${log.image ? `<div class="mt-4 rounded-2xl overflow-hidden border border-[var(--color-border)] shadow-sm">
+                                <img src="${log.image}" class="w-full h-auto object-cover max-h-72" loading="lazy">
+                            </div>` : ''}
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        // --- View 3: Calendar & Agenda ---
+        function changeMonth(offset) {
+            currentMonth.setMonth(currentMonth.getMonth() + offset);
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const year = currentMonth.getFullYear();
+            const month = currentMonth.getMonth();
+            
+            document.getElementById('calendar-month-label').innerText = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = '';
+            
+            getAllStoreData('events').then(events => {
+                for(let i=0; i<firstDay; i++) { grid.innerHTML += `<div></div>`; }
+                
+                for(let d=1; d<=daysInMonth; d++) {
+                    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                    const dayEvents = events.filter(e => e.date === dateStr);
+                    
+                    const hasEvent = dayEvents.length > 0;
+                    const isToday = new Date().toISOString().split('T')[0] === dateStr;
+                    const isSelected = selectedDate === dateStr;
+                    
+                    let dotHtml = '';
+                    if(hasEvent) {
+                        dotHtml = `<div class="absolute bottom-1.5 flex gap-1 justify-center w-full">`;
+                        dayEvents.slice(0,3).forEach(() => { dotHtml += `<span class="w-1.5 h-1.5 bg-brand rounded-full shadow-[0_0_4px_var(--color-brand)]"></span>`; });
+                        dotHtml += `</div>`;
+                    }
+                    
+                    let cellClass = `cal-day relative h-12 sm:h-14 flex items-center justify-center rounded-2xl cursor-pointer text-sm font-bold transition-all border border-transparent `;
+                    if(isSelected) cellClass += `ring-2 ring-brand ring-offset-2 ring-offset-[var(--color-card)] `;
+                    
+                    if(isToday && !isSelected) cellClass += `bg-brand/10 text-brand `;
+                    else if(isSelected) cellClass += `bg-gradient-to-br from-brand to-purple-600 text-white shadow-[0_4px_16px_var(--color-brand-glow)] `;
+                    else cellClass += `text-textMain hover:bg-bgPrime hover:border-[var(--color-border)] `;
+                    
+                    grid.innerHTML += `<div class="${cellClass}" data-date="${dateStr}" onclick="selectDate('${dateStr}')">${d}${dotHtml}</div>`;
+                }
+            });
+        }
+
+        function selectDate(dateStr) {
+            selectedDate = dateStr;
+            renderCalendar();
+            renderAgenda();
+        }
+
+        function renderAgenda() {
+            const dObj = new Date(selectedDate);
+            document.getElementById('agenda-date-label').innerText = dObj.toLocaleDateString('en-US', {weekday: 'long', month:'short', day:'numeric'});
+            const container = document.getElementById('agenda-list');
+            container.innerHTML = '';
+            
+            getAllStoreData('events').then(events => {
+                const dayEvents = events.filter(e => e.date === selectedDate).sort((a,b) => (a.time || '').localeCompare(b.time || ''));
+                if(dayEvents.length === 0) {
+                    container.innerHTML = `<div class="p-8 text-center text-textMuted bg-card/60 backdrop-blur-md rounded-3xl border border-[var(--color-border)] shadow-sm">
+                        <i class="fa-regular fa-calendar-xmark text-4xl mb-4 opacity-30"></i>
+                        <p class="text-sm font-bold">No agenda for this date.</p>
+                    </div>`;
+                    return;
+                }
+                dayEvents.forEach(evt => {
+                    container.innerHTML += `
+                        <div class="flex items-start p-5 rounded-3xl bg-card border border-[var(--color-border)] shadow-sm relative overflow-hidden group hover:border-brand/30 transition-all">
+                            <div class="absolute left-0 top-0 bottom-0 w-2 bg-gradient-to-b from-brand to-purple-500 rounded-l-3xl"></div>
+                            <div class="flex-1 pl-4 pr-2 overflow-hidden">
+                                <h4 class="font-black text-textMain text-base truncate">${evt.title}</h4>
+                                <div class="flex items-center gap-4 mt-2 text-xs text-textMuted font-bold tracking-wide">
+                                    ${evt.time ? `<span><i class="fa-regular fa-clock mr-1 text-brand"></i>${evt.time}</span>` : ''}
+                                    ${evt.location ? `<span class="truncate"><i class="fa-solid fa-location-dot mr-1 text-purple-500"></i>${evt.location}</span>` : ''}
+                                </div>
+                                ${evt.description ? `<p class="text-sm text-textMuted mt-3 font-medium leading-relaxed bg-bgPrime/80 p-3 rounded-2xl border border-[var(--color-border)] shadow-inner">${evt.isSecure ? '<i class="fa-solid fa-lock text-brand mr-2"></i> [Encrypted Vault Note]' : evt.description}</p>` : ''}
+                            </div>
+                            <button onclick="openEventModal('${evt.id}')" class="text-textMuted hover:text-white hover:bg-brand w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all border border-[var(--color-border)] bg-bgPrime"><i class="fa-solid fa-pen text-sm"></i></button>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        // Agenda Modals
+        async function openEventModal(id = null) {
+            document.getElementById('ev-is-secure').checked = false;
+            if(id) {
+                getStoreData('events', id).then(async evt => {
+                    document.getElementById('ev-id').value = evt.id;
+                    document.getElementById('ev-date').value = evt.date;
+                    document.getElementById('ev-title').value = evt.title;
+                    document.getElementById('ev-time').value = evt.time || '';
+                    document.getElementById('ev-location').value = evt.location || '';
+                    
+                    if(evt.isSecure && evt.description) {
+                        try {
+                            const pin = await requestPIN();
+                            const decrypted = await CryptoUtils.decrypt(evt.description, pin);
+                            if(decrypted) {
+                                document.getElementById('ev-desc').value = decrypted;
+                                document.getElementById('ev-is-secure').checked = true;
+                                showIsland("Vault Unlocked", "fa-unlock");
+                            } else {
+                                showIsland("Wrong PIN", "fa-lock", true);
+                                document.getElementById('ev-desc').value = evt.description;
+                                document.getElementById('ev-is-secure').checked = true;
+                            }
+                        } catch(e) {
+                            return; // Modal cancelled
+                        }
+                    } else {
+                        document.getElementById('ev-desc').value = evt.description || '';
+                    }
+                    
+                    document.getElementById('btn-delete-ev').classList.remove('hidden');
+                    openModal('modal-event');
+                });
+            } else {
+                document.getElementById('ev-id').value = '';
+                document.getElementById('ev-date').value = selectedDate;
+                document.getElementById('ev-title').value = '';
+                document.getElementById('ev-time').value = '';
+                document.getElementById('ev-location').value = '';
+                document.getElementById('ev-desc').value = '';
+                document.getElementById('btn-delete-ev').classList.add('hidden');
+                openModal('modal-event');
+            }
+        }
+        async function saveEvent() {
+            const id = document.getElementById('ev-id').value || 'evt_' + Date.now();
+            const date = document.getElementById('ev-date').value;
+            const title = document.getElementById('ev-title').value.trim();
+            const time = document.getElementById('ev-time').value;
+            const location = document.getElementById('ev-location').value.trim();
+            let description = document.getElementById('ev-desc').value.trim();
+            const isSecure = document.getElementById('ev-is-secure').checked;
+            
+            if(!title || !date) return showIsland("Title and Date required", "fa-triangle-exclamation", true);
+            
+            if(isSecure && description) {
+                try {
+                    const pin = await requestPIN();
+                    description = await CryptoUtils.encrypt(description, pin);
+                    showIsland("Note Encrypted", "fa-lock");
+                } catch(e) {
+                    return; // Cancelled
+                }
+            }
+            
+            putStoreData('events', {id, date, title, time, location, description, isSecure}).then(() => {
+                closeModal('modal-event');
+                showIsland("Event Saved", "fa-calendar-check");
+                renderCalendar();
+                if(date === selectedDate) renderAgenda();
+            });
+        }
+        function deleteEvent() {
+            if(confirm("Delete this event?")) {
+                deleteStoreData('events', document.getElementById('ev-id').value).then(() => {
+                    closeModal('modal-event');
+                    renderCalendar();
+                    renderAgenda();
+                });
+            }
+        }
+
+        // --- View 4: Settings & PDF ---
+        function openPdfModal() {
+            openModal('modal-pdf');
+            togglePdfInputs();
+        }
+        function togglePdfInputs() {
+            const type = document.getElementById('pdf-type').value;
+            document.getElementById('pdf-history-inputs').classList.toggle('hidden', type !== 'history');
+            document.getElementById('pdf-calendar-inputs').classList.toggle('hidden', type !== 'calendar');
+        }
+
+        function generatePDF() {
+            const type = document.getElementById('pdf-type').value;
+            const printDiv = document.createElement('div');
+            // Constructing isolated print div to avoid complex CSS issues (overflow, blur, missing canvas contexts)
+            printDiv.style.position = 'absolute';
+            printDiv.style.top = '0';
+            printDiv.style.left = '0';
+            printDiv.style.width = '800px';
+            printDiv.style.backgroundColor = '#ffffff'; // Force solid white background
+            printDiv.style.color = '#000000'; // Force solid black text
+            printDiv.style.padding = '40px';
+            printDiv.style.fontFamily = 'sans-serif';
+            printDiv.style.zIndex = '-9999';
+            printDiv.style.pointerEvents = 'none';
+            
+            let promise;
+            
+            if(type === 'history') {
+                const start = document.getElementById('pdf-start-date').value;
+                const end = document.getElementById('pdf-end-date').value;
+                if(!start || !end) return showIsland("Please select date range", "fa-xmark", true);
+                
+                promise = getAllStoreData('logs').then(logs => {
+                    const filtered = logs.filter(l => l.date >= start && l.date <= end).sort((a,b) => a.date.localeCompare(b.date));
+                    printDiv.innerHTML = `<h1 style="font-size: 28px; font-weight: bold; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">Najwa Logbook Report</h1>
+                                          <p style="color: #555; margin-bottom: 30px;">Periode: ${start} to ${end}</p>`;
+                    if(filtered.length === 0) printDiv.innerHTML += `<p>No records found in this period.</p>`;
+                    filtered.forEach(l => {
+                        printDiv.innerHTML += `
+                            <div style="margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 20px;">
+                                <h3 style="font-weight: bold; font-size: 18px; margin-bottom: 5px;">${l.date} - ${l.taskName} <span style="font-weight: normal; color: #666; font-size: 14px;">(${l.realTime})</span></h3>
+                                ${l.note ? `<div style="background: #f9f9f9; padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 14px; color: #333;">${l.isSecure ? '[Encrypted Vault Note]' : l.note}</div>` : ''}
+                                ${l.image ? `<img src="${l.image}" style="max-width: 400px; max-height: 400px; margin-top: 15px; border-radius: 8px; border: 1px solid #ddd;" />` : ''}
+                            </div>
+                        `;
+                    });
+                });
+            } else if (type === 'calendar') {
+                const month = document.getElementById('pdf-month').value; 
+                if(!month) return showIsland("Please select a month", "fa-xmark", true);
+                
+                promise = getAllStoreData('events').then(events => {
+                    const filtered = events.filter(e => e.date.startsWith(month)).sort((a,b) => a.date.localeCompare(b.date));
+                    printDiv.innerHTML = `<h1 style="font-size: 28px; font-weight: bold; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">Najwa Agenda Report</h1>
+                                          <p style="color: #555; margin-bottom: 30px;">Month: ${month}</p>`;
+                    if(filtered.length === 0) printDiv.innerHTML += `<p>No events found for this month.</p>`;
+                    filtered.forEach(e => {
+                        printDiv.innerHTML += `
+                            <div style="margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+                                <h3 style="font-weight: bold; font-size: 18px; margin-bottom: 5px;">${e.date} ${e.time ? `<span style="color: #666; font-weight: normal; font-size: 14px;">at ${e.time}</span>` : ''} - ${e.title}</h3>
+                                ${e.location ? `<p style="font-size: 14px; color: #555; margin-top: 5px;">📍 ${e.location}</p>` : ''}
+                                ${e.description ? `<div style="margin-top: 10px; font-size: 14px; color: #333;">${e.isSecure ? '[Encrypted Vault Note]' : e.description}</div>` : ''}
+                            </div>
+                        `;
+                    });
+                });
+            } else if (type === 'inventory') {
+                promise = getAllStoreData('inventory').then(items => {
+                    printDiv.innerHTML = `<h1 style="font-size: 28px; font-weight: bold; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">Najwa Inventory Status</h1>`;
+                    if(items.length === 0) printDiv.innerHTML += `<p>Inventory is empty.</p>`;
+                    items.forEach(i => {
+                        printDiv.innerHTML += `
+                            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding: 15px 0;">
+                                <span style="font-weight: bold; font-size: 18px;">${i.name}</span>
+                                <span style="font-size: 16px; background: #f0f0f0; padding: 4px 12px; border-radius: 20px;">Qty: ${i.qty}</span>
+                            </div>
+                        `;
+                    });
+                });
+            }
+            
+            promise.then(() => {
+                document.body.appendChild(printDiv);
+                
+                // Allow browser to calculate styles before canvas capture
+                setTimeout(() => {
+                    const opt = {
+                        margin: 0.5,
+                        filename: `NajwaPlanner_${type}_Report.pdf`,
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 2, useCORS: true, logging: false },
+                        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+                    };
+                    html2pdf().set(opt).from(printDiv).save().then(() => {
+                        if(document.body.contains(printDiv)) document.body.removeChild(printDiv);
+                        closeModal('modal-pdf');
+                        showIsland("Report Generated!", "fa-check");
+                    }).catch((err) => {
+                        if(document.body.contains(printDiv)) document.body.removeChild(printDiv);
+                        showIsland("Error generating PDF", "fa-triangle-exclamation", true);
+                        console.error("PDF generation error:", err);
+                    });
+                }, 500); // Wait 500ms for images to render in the print div
+            });
+        }
+
+        function resetData() {
+            if(confirm("CRITICAL WARNING: Are you sure you want to delete ALL data? This action cannot be undone!")) {
+                db.close(); // Important: Close connection before deleting
+                localStorage.clear();
+                const request = indexedDB.deleteDatabase(DB_NAME);
+                request.onsuccess = () => {
+                    alert("System Reset Complete. Reloading...");
+                    location.reload();
+                };
+                request.onerror = () => {
+                    alert("Failed to reset system. Please clear browser data manually.");
+                };
+                request.onblocked = () => {
+                    alert("Reset is blocked because the database is open in another tab. Please close other tabs and try again.");
+                };
+            }
+        }
+
+        // --- Boot Sequence ---
+        window.onload = () => {
+            const savedTheme = localStorage.getItem('najwaTheme') || 'theme-dark';
+            setTheme(savedTheme);
+            initDB();
+        };
+    </script>
+</body>
+</html>
